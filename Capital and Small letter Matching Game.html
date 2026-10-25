@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABC Match Adventure</title>
+<style>
+  * { box-sizing: border-box; font-family: 'Comic Sans MS', 'Chalkboard SE', 'Segoe UI', sans-serif; user-select: none; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+         background: linear-gradient(145deg,#f9e7b3,#f5d7a1); padding:12px; }
+  .wrap { background:#fff7e6; border-radius:50px; box-shadow:0 20px 30px rgba(0,0,0,.2);
+          padding:28px 22px 32px; max-width:760px; width:100%; border:5px solid #e6c68a; }
+  h1 { text-align:center; font-size:2rem; margin:0 0 12px; color:#4b2e1b; text-shadow:2px 2px 0 #f0d9b0; }
+  .bar { display:flex; justify-content:space-between; align-items:center; background:#d9b382;
+         padding:10px 18px; border-radius:40px; margin-bottom:16px; color:#2d1e0f; font-weight:bold;
+         font-size:1rem; box-shadow:inset 0 -3px 0 #b58b55; flex-wrap:wrap; gap:8px; }
+  .badge { background:#fef7d6; padding:4px 16px; border-radius:30px; border:2px solid #a57c4b; }
+  .msg { background:#fcf2db; border-radius:50px; padding:14px; margin-bottom:16px; text-align:center;
+         font-size:1.15rem; font-weight:600; color:#5a3e23; border:2px dashed #c1a177; min-height:60px;
+         display:flex; align-items:center; justify-content:center; }
+
+  /* JOIN PAGE */
+  .join-box { padding:10px 6px 6px; }
+  .join-box h2 { text-align:center; font-size:1.6rem; color:#4b2e1b; margin:0 0 18px; }
+  .field { margin:0 auto 16px; max-width:360px; }
+  .field label { display:block; font-size:1.1rem; font-weight:700; color:#5a3e23; margin-bottom:6px; }
+  .field input, .field select {
+      width:100%; font-size:1.3rem; padding:12px 16px; border-radius:20px;
+      border:4px solid #af8d5a; background:#fff7e6; color:#2c1d0b; font-weight:700; outline:none; }
+  .field input:focus, .field select:focus { border-color:#e09e3e; box-shadow:0 0 0 4px #ffe8a8; }
+  .join-note { text-align:center; font-size:.95rem; color:#7a5a35; margin-top:4px; }
+
+  /* QUESTION */
+  .question { text-align:center; margin:8px 0 4px; }
+  .q-label { font-size:1rem; color:#7a5a35; font-weight:700; letter-spacing:1px; }
+  .prompt-big { font-size:5rem; font-weight:900; color:#3e2a12; line-height:1;
+                text-shadow:4px 4px 0 #f0d9b0; margin:2px 0 14px; }
+  .zone { background:#e6d6b8; border:5px dashed #b1905c; border-radius:26px; padding:10px 16px;
+          min-height:110px; min-width:140px; display:flex; align-items:center; justify-content:center;
+          font-size:3rem; font-weight:800; color:#3d2a14; box-shadow:inset 0 0 0 2px #fff2d7;
+          margin:0 auto 14px; transition:.15s; }
+  .zone.over { background:#f3e9c0; border-color:#e09e3e; }
+  .zone.correct { background:#b8e0b8; border-color:#3e8b3e; box-shadow:0 0 0 6px #c8f0c8; }
+  .tray { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin:14px 0 8px; }
+  .tile { background:#fdeacb; border:4px solid #ac8b5f; border-radius:24px; padding:12px 18px;
+          font-size:2.6rem; font-weight:800; color:#2f1d0c; box-shadow:0 7px 0 #7f623f;
+          cursor:grab; width:100px; text-align:center; line-height:1; transition:transform .05s; }
+  .tile:active { cursor:grabbing; }
+  .tile.dragging { opacity:.5; transform:scale(.95); }
+  .tile.selected { border-color:#e09e3e; box-shadow:0 7px 0 #b57a1e, 0 0 0 4px #ffe8a8; }
+
+  /* FILL */
+  .fillrow { display:flex; align-items:center; justify-content:center; gap:22px; background:#efdfc2;
+             padding:18px 30px; border-radius:50px; margin:16px 0; flex-wrap:wrap; }
+  .prompt { font-size:2.6rem; font-weight:800; color:#3e2a12; }
+  .inp { font-size:2.6rem; width:110px; text-align:center; background:#fff7e6; border:5px solid #af8d5a;
+         border-radius:22px; padding:6px 0; font-weight:800; color:#2c1d0b; outline:none; }
+  .inp.correct { background:#c6e8c6; border-color:#3e8b3e; color:#1c4d1c; }
+
+  /* BUTTONS */
+  .btn { background:#b1c97a; border:none; border-radius:50px; padding:16px 42px; font-size:1.6rem;
+         font-weight:800; color:#2f381c; box-shadow:0 7px 0 #6e8a3f; cursor:pointer; display:block;
+         margin:14px auto 4px; letter-spacing:1px; }
+  .btn:active { transform:translateY(4px); box-shadow:0 3px 0 #6e8a3f; }
+  .btn:disabled { opacity:.5; pointer-events:none; }
+  .btn.small { font-size:1rem; padding:10px 22px; box-shadow:0 5px 0 #6e8a3f; margin:8px 6px; }
+  .btn.ghost { background:#e0cfae; color:#4b2e1b; box-shadow:0 5px 0 #a98d5f; }
+
+  /* TROPHY */
+  .trophy { text-align:center; font-size:4.5rem; margin:10px 0; filter:drop-shadow(0 8px 6px rgba(0,0,0,.2)); }
+
+  /* CERTIFICATE */
+  .cert-page { padding: 6px; }
+  .certificate {
+    background: #fffdf3;
+    border: 12px double #c9a15a;
+    border-radius: 26px;
+    padding: 26px 22px 30px;
+    text-align: center;
+    box-shadow: 0 12px 24px rgba(0,0,0,.18), inset 0 0 0 4px #fbeecb;
+    position: relative;
+    overflow: hidden;
+  }
+  .certificate::before, .certificate::after {
+    content: "★";
+    position: absolute;
+    font-size: 2.6rem;
+    color: #e9c87a;
+    opacity: .8;
+  }
+  .certificate::before { top: 10px; left: 18px; }
+  .certificate::after  { bottom: 10px; right: 18px; }
+
+  .cert-school { font-size: 1.3rem; letter-spacing: 2px; color: #2f6b2f; font-weight: 900;
+                 text-transform: uppercase; margin-bottom: 10px; }
+  .cert-title { font-size: 1.1rem; letter-spacing: 3px; color: #a17d3e; font-weight: 800; }
+  .cert-main  { font-size: 2.1rem; font-weight: 900; color: #4b2e1b; margin: 8px 0 2px;
+                text-shadow: 2px 2px 0 #f0d9b0; }
+  .cert-award { font-size: 1rem; color: #7a5a35; font-weight: 700; margin: 10px 0 4px; }
+  .cert-name  { font-size: 2.4rem; font-weight: 900; color: #2f6b2f; margin: 6px 0 2px;
+                border-bottom: 3px dashed #c9a15a; display: inline-block; padding: 0 22px 4px;
+                min-width: 60%; }
+  .cert-class { font-size: 1.2rem; font-weight: 800; color: #4b2e1b; margin: 8px 0 16px; }
+  .cert-trophy{ font-size: 3.6rem; margin: 4px 0 8px; }
+  .cert-text  { font-size: 1rem; color: #6b4e2e; line-height: 1.6; max-width: 500px; margin: 0 auto; }
+  .cert-text p { margin: 4px 0; }
+  .cert-date  { font-size: .95rem; color: #8a6a40; margin-top: 16px; font-weight: 700; }
+  .cert-sign  { display:flex; justify-content:space-around; margin-top: 22px; flex-wrap: wrap; gap: 14px; }
+  .cert-sign div { border-top: 2px solid #c9a15a; padding-top: 4px; font-size: .8rem;
+                   color: #7a5a35; min-width: 130px; font-weight: 700; }
+
+  .hidden { display:none !important; }
+  .center { text-align:center; }
+  @media(max-width:520px){
+    h1{font-size:1.5rem}.tile{font-size:2rem;width:80px;padding:10px}
+    .zone{font-size:2.4rem;min-height:90px;min-width:110px}
+    .prompt-big{font-size:3.6rem}.prompt,.inp{font-size:2rem}.inp{width:85px}
+    .btn{font-size:1.3rem;padding:13px 28px}
+    .btn.small{font-size:.9rem;padding:8px 16px}
+    .cert-main{font-size:1.6rem}.cert-name{font-size:1.9rem}
+    .cert-school{font-size:1rem}
+  }
+  @media print {
+    body { background:#fff; padding:0; }
+    .wrap { box-shadow:none; border:none; background:#fff; padding:0; }
+    h1, .bar, .msg, #joinPage, #gamePage, .cert-actions { display:none !important; }
+    .certificate { box-shadow:none; border-color:#c9a15a; page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐨 ABC Match Adventure 🐨</h1>
+
+  <!-- JOIN IN -->
+  <div id="joinPage" class="join-box">
+    <h2>👋 Join in!</h2>
+    <div class="msg" style="margin-bottom:18px">
+      Enter your class and name, then start your letter adventure!
+    </div>
+    <div class="field">
+      <label for="classSelect">Class / Group</label>
+      <select id="classSelect">
+        <option value="">— choose your class —</option>
+        <option value="1A">1A</option>
+        <option value="1B">1B</option>
+        <option value="1C">1C</option>
+        <option value="2A">2A</option>
+        <option value="2B">2B</option>
+        <option value="3A">3A</option>
+        <option value="Other">Other</option>
+      </select>
+      <input id="classOther" class="hidden" style="margin-top:8px" placeholder="Type your class name…" maxlength="30">
+    </div>
+    <div class="field">
+      <label for="pupilName">Your name</label>
+      <input id="pupilName" placeholder="e.g. Jamie" maxlength="30" autocomplete="off">
+    </div>
+    <button class="btn" id="joinBtn">▶ Start playing</button>
+    <div class="join-note">Reach the trophy to get your own certificate! 🏆</div>
+  </div>
+
+  <!-- GAME -->
+  <div id="gamePage" class="hidden">
+    <div class="bar">
+      <span class="badge" id="playerBadge">👤 —</span>
+      <span class="badge" id="levelBadge">Level 1 · 3 options</span>
+      <span id="starBadge">🏆 0 / 5 stars</span>
+    </div>
+    <div class="msg" id="message">Drag the matching letter into the box!</div>
+
+    <div id="dragStage">
+      <div class="question">
+        <div class="q-label" id="qLabel">Match this letter</div>
+        <div class="prompt-big" id="promptBig">M</div>
+      </div>
+      <div class="zone" id="dropZone">?</div>
+      <div class="tray" id="trayContainer"></div>
+      <button class="btn" id="checkDragBtn">✔ Check answer</button>
+    </div>
+
+    <div id="fillStage" class="hidden">
+      <div id="fillContainer"></div>
+      <button class="btn" id="checkFillBtn">✔ Check answer</button>
+    </div>
+  </div>
+
+  <!-- CERTIFICATE PAGE -->
+  <div id="certPage" class="cert-page hidden">
+    <div class="certificate" id="certificate">
+      <div class="cert-school">SHEK WU HUI PUBLIC SCHOOL</div>
+      <div class="cert-title">ABC MATCH ADVENTURE</div>
+      <div class="cert-main">🎉 CERTIFICATE OF ACHIEVEMENT 🎉</div>
+      <div class="cert-award">This certificate is proudly presented to</div>
+      <div class="cert-name" id="certName">—</div>
+      <div class="cert-class" id="certClass">Class: —</div>
+      <div class="cert-trophy">🏆</div>
+      <div class="cert-text">
+        <p>for successfully matching capital and small letters from <b>A to Z</b>,</p>
+        <p>completing all levels, and earning the <b>ABC Champion Trophy</b>.</p>
+        <p>Brilliant work!</p>
+      </div>
+      <div class="cert-date" id="certDate">Awarded on —</div>
+      <div class="cert-sign">
+        <div>Teacher</div>
+        <div>Date</div>
+      </div>
+    </div>
+
+    <div class="cert-actions center" style="margin-top:16px">
+      <button class="btn small" onclick="window.print()">🖨 Print certificate</button>
+      <button class="btn small ghost" onclick="location.reload()">🔄 Play again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const CAPS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const LOWS = 'abcdefghijklmnopqrstuvwxyz'.split('');
+const QUESTIONS_PER_ROUND = 5;
+
+let state = {
+  player: { className: '', name: '' },
+  stage: 1, optionCount: 3, questionIndex: 0, stars: 0,
+  currentQuestion: null, selectedTile: null, usedLetters: new Set()
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function randInt(n){ return Math.floor(Math.random()*n); }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=randInt(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function pickLetters(n, pool){
+  const fresh = pool.filter(l => !state.usedLetters.has(l));
+  const source = fresh.length >= n ? fresh : pool.slice();
+  const chosen = shuffle(source.slice()).slice(0, n);
+  chosen.forEach(l => state.usedLetters.add(l));
+  if (state.usedLetters.size > 12){ state.usedLetters = new Set(chosen); }
+  return chosen;
+}
+
+/* Format a Date as "25th October, 2026" */
+function formatOrdinalDate(d){
+  const day = d.getDate();
+  const monthNames = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+  const month = monthNames[d.getMonth()];
+  const year = d.getFullYear();
+
+  let suffix = 'th';
+  if (day % 100 < 11 || day % 100 > 13){
+    switch (day % 10){
+      case 1: suffix = 'st'; break;
+      case 2: suffix = 'nd'; break;
+      case 3: suffix = 'rd'; break;
+    }
+  }
+  return `${day}${suffix} ${month}, ${year}`;
+}
+
+/* ============================================================
+   QUESTION BUILDERS
+   ============================================================ */
+function makeDragQuestion(optionCount){
+  const direction = Math.random() < 0.5 ? 'C2L' : 'L2C';
+  const pool = direction === 'C2L' ? CAPS : LOWS;
+  const answerPool = direction === 'C2L' ? LOWS : CAPS;
+
+  const target = pickLetters(1, pool)[0];
+  const correct = direction === 'C2L' ? target.toLowerCase() : target.toUpperCase();
+
+  const confusable = {
+    'b':['d','p','q'], 'd':['b','p','q'], 'p':['b','d','q'], 'q':['b','d','p'],
+    'm':['n','w'], 'n':['m','u'], 'u':['v','n'], 'v':['u','w'], 'w':['m','v'],
+    'i':['l','j'], 'l':['i','t'], 't':['l','f'], 'f':['t','r'],
+    'c':['e','o'], 'e':['c','o'], 'o':['c','e'], 's':['z','c'], 'z':['s','x'],
+    'g':['q','j'], 'j':['i','g'], 'k':['h','x'], 'h':['k','n'],
+    'a':['o','e'], 'r':['n','f'], 'x':['z','k'], 'y':['v','u']
+  };
+  const base = correct.toLowerCase();
+  let distractorPool = [];
+  if (confusable[base]) {
+    distractorPool = confusable[base]
+      .map(l => direction === 'C2L' ? l : l.toUpperCase())
+      .filter(l => l !== correct);
+  }
+  const others = answerPool.filter(l => l !== correct && !distractorPool.includes(l));
+  distractorPool = distractorPool.concat(shuffle(others));
+
+  const tiles = shuffle([correct, ...distractorPool.slice(0, optionCount - 1)]);
+  return { type:'drag', prompt: target, correct, tiles, direction };
+}
+
+function makeFillQuestion(){
+  const direction = Math.random() < 0.5 ? 'C2L' : 'L2C';
+  const pool = direction === 'C2L' ? CAPS : LOWS;
+  const target = pickLetters(1, pool)[0];
+  const correct = direction === 'C2L' ? target.toLowerCase() : target.toUpperCase();
+  return { type:'fill', prompt: target, correct, direction };
+}
+
+/* ============================================================
+   DOM HANDLES
+   ============================================================ */
+const joinPage    = document.getElementById('joinPage');
+const gamePage    = document.getElementById('gamePage');
+const certPage    = document.getElementById('certPage');
+const classSelect = document.getElementById('classSelect');
+const classOther  = document.getElementById('classOther');
+const pupilName   = document.getElementById('pupilName');
+const joinBtn     = document.getElementById('joinBtn');
+const playerBadge = document.getElementById('playerBadge');
+const levelBadge  = document.getElementById('levelBadge');
+const starBadge   = document.getElementById('starBadge');
+const messageEl   = document.getElementById('message');
+const dragStage   = document.getElementById('dragStage');
+const fillStage   = document.getElementById('fillStage');
+const qLabel      = document.getElementById('qLabel');
+const promptBig   = document.getElementById('promptBig');
+const dropZone    = document.getElementById('dropZone');
+const trayBox     = document.getElementById('trayContainer');
+const fillBox     = document.getElementById('fillContainer');
+const checkDragBtn = document.getElementById('checkDragBtn');
+const checkFillBtn = document.getElementById('checkFillBtn');
+const certName    = document.getElementById('certName');
+const certClass   = document.getElementById('certClass');
+const certDate    = document.getElementById('certDate');
+
+/* ============================================================
+   JOIN
+   ============================================================ */
+classSelect.addEventListener('change', () => {
+  if (classSelect.value === 'Other'){ classOther.classList.remove('hidden'); classOther.focus(); }
+  else { classOther.classList.add('hidden'); classOther.value = ''; }
+});
+joinBtn.addEventListener('click', () => {
+  let cls = classSelect.value;
+  if (cls === 'Other') cls = classOther.value.trim();
+  const name = pupilName.value.trim();
+  if (!cls){ alert('Please choose or type your class.'); return; }
+  if (!name){ alert('Please type your name.'); pupilName.focus(); return; }
+  state.player = { className: cls, name: name };
+  playerBadge.textContent = `👤 ${name} · ${cls}`;
+  joinPage.classList.add('hidden');
+  gamePage.classList.remove('hidden');
+  state.currentQuestion = makeDragQuestion(state.optionCount);
+  renderDragQuestion();
+});
+
+/* ============================================================
+   BADGES
+   ============================================================ */
+function updateBadges(){
+  if (state.stage <= 3){
+    levelBadge.textContent = `Level ${state.stage} · ${state.optionCount} options · Q${state.questionIndex+1}/${QUESTIONS_PER_ROUND}`;
+  } else if (state.stage === 4){
+    levelBadge.textContent = `Level 4 · Fill the blank · Q${state.questionIndex+1}/${QUESTIONS_PER_ROUND}`;
+  } else {
+    levelBadge.textContent = `🏆 Trophy round ${Math.min(state.stars+1,5)} / 5 · Q${state.questionIndex+1}/${QUESTIONS_PER_ROUND}`;
+  }
+  starBadge.textContent = `🏆 ${state.stars} / 5 stars`;
+}
+
+/* ============================================================
+   RENDER DRAG
+   ============================================================ */
+function renderDragQuestion(){
+  dragStage.classList.remove('hidden');
+  fillStage.classList.add('hidden');
+  const q = state.currentQuestion;
+  qLabel.textContent = q.direction === 'C2L' ? 'Find the small letter' : 'Find the capital letter';
+  promptBig.textContent = q.prompt;
+  dropZone.textContent = '?';
+  dropZone.className = 'zone';
+  state.selectedTile = null;
+  trayBox.innerHTML = '';
+
+  dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('over'); };
+  dropZone.ondragleave = () => dropZone.classList.remove('over');
+  dropZone.ondrop = e => {
+    e.preventDefault();
+    dropZone.classList.remove('over');
+    const val = e.dataTransfer.getData('text/plain');
+    if (val && q.tiles.includes(val)) setDrop(val);
+  };
+  dropZone.onclick = () => {
+    if (state.selectedTile && q.tiles.includes(state.selectedTile)){
+      setDrop(state.selectedTile);
+      Array.from(trayBox.children).forEach(c => c.classList.remove('selected'));
+    } else {
+      dropZone.textContent = '?';
+      dropZone.className = 'zone';
+      state.selectedTile = null;
+    }
+  };
+
+  q.tiles.forEach(t => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.textContent = t;
+    tile.draggable = true;
+    tile.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', t);
+      tile.classList.add('dragging');
+    });
+    tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
+    tile.addEventListener('click', () => {
+      state.selectedTile = t;
+      Array.from(trayBox.children).forEach(c => c.classList.remove('selected'));
+      tile.classList.add('selected');
+    });
+    trayBox.appendChild(tile);
+  });
+
+  messageEl.textContent = 'Drag the matching letter into the box — or tap a tile, then tap the box.';
+  checkDragBtn.disabled = false;
+  updateBadges();
+}
+
+function setDrop(val){
+  dropZone.textContent = val;
+  dropZone.className = 'zone';
+  state.selectedTile = null;
+  playTone(600, 0.08);
+}
+
+/* ============================================================
+   RENDER FILL
+   ============================================================ */
+function renderFillQuestion(){
+  dragStage.classList.add('hidden');
+  fillStage.classList.remove('hidden');
+
+  const q = state.currentQuestion;
+  fillBox.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'fillrow';
+
+  const prompt = document.createElement('div');
+  prompt.className = 'prompt';
+  prompt.textContent = q.direction === 'C2L' ? `${q.prompt}  →  ?` : `?  ←  ${q.prompt}`;
+
+  const inp = document.createElement('input');
+  inp.className = 'inp';
+  inp.maxLength = 1;
+  inp.autocomplete = 'off';
+  inp.id = 'fillInput';
+  inp.addEventListener('input', () => {
+    inp.value = inp.value.replace(/[^a-zA-Z]/g,'');
+    inp.classList.remove('correct');
+  });
+
+  row.appendChild(prompt);
+  row.appendChild(inp);
+  fillBox.appendChild(row);
+
+  messageEl.textContent = 'Type the matching letter — watch the arrow!';
+  checkFillBtn.disabled = false;
+  updateBadges();
+  inp.focus();
+}
+
+/* ============================================================
+   NEXT LOGIC
+   ============================================================ */
+function nextDragQuestion(){
+  state.questionIndex++;
+  if (state.questionIndex >= QUESTIONS_PER_ROUND){
+    if (state.stage === 1){ state.stage = 2; state.optionCount = 4; }
+    else if (state.stage === 2){ state.stage = 3; state.optionCount = 5; }
+    else if (state.stage === 3){ state.stage = 4; }
+    state.questionIndex = 0;
+    if (state.stage === 4){
+      messageEl.textContent = '🎉 Drag levels complete! Now fill in the blanks.';
+      setTimeout(() => { state.currentQuestion = makeFillQuestion(); renderFillQuestion(); }, 900);
+      return;
+    }
+  }
+  state.currentQuestion = makeDragQuestion(state.optionCount);
+  renderDragQuestion();
+}
+
+function nextFillQuestion(){
+  state.questionIndex++;
+  if (state.questionIndex >= QUESTIONS_PER_ROUND){
+    if (state.stage === 4){
+      state.stage = 5; state.stars = 0; state.questionIndex = 0;
+      messageEl.textContent = '⭐ Fill-in-blanks passed! TROPHY CHALLENGE: 5 rounds in a row.';
+      checkFillBtn.disabled = true;
+      setTimeout(() => { state.currentQuestion = makeFillQuestion(); renderFillQuestion(); }, 900);
+      return;
+    } else if (state.stage === 5){
+      state.stars++;
+      state.questionIndex = 0;
+      if (state.stars >= 5){
+        showCertificate();
+        return;
+      } else {
+        messageEl.textContent = `⭐ Star ${state.stars} earned! Next trophy round…`;
+        checkFillBtn.disabled = true;
+        setTimeout(() => { state.currentQuestion = makeFillQuestion(); renderFillQuestion(); }, 900);
+        return;
+      }
+    }
+  }
+  state.currentQuestion = makeFillQuestion();
+  renderFillQuestion();
+}
+
+/* ============================================================
+   CHECK
+   ============================================================ */
+function handleDragCheck(){
+  if (!state.currentQuestion) return;
+  const chosen = dropZone.textContent;
+  const isCorrect = chosen && chosen.toLowerCase() === state.currentQuestion.correct.toLowerCase();
+
+  if (isCorrect){
+    cheer();
+    dropZone.classList.add('correct');
+    messageEl.textContent = '✅ Correct! Next question…';
+    checkDragBtn.disabled = true;
+    setTimeout(nextDragQuestion, 700);
+  } else {
+    sad();
+    messageEl.textContent = '😅 Not quite. Restarting this level with new letters — keep trying!';
+    checkDragBtn.disabled = true;
+    setTimeout(() => {
+      state.questionIndex = 0;
+      state.currentQuestion = makeDragQuestion(state.optionCount);
+      renderDragQuestion();
+    }, 1200);
+  }
+}
+
+function handleFillCheck(){
+  if (!state.currentQuestion) return;
+  const inp = document.getElementById('fillInput');
+  const val = (inp ? inp.value : '').trim();
+  const isCorrect = val && val.toLowerCase() === state.currentQuestion.correct.toLowerCase();
+
+  if (isCorrect){
+    cheer();
+    if (inp) inp.classList.add('correct');
+    messageEl.textContent = '✅ Correct! Next…';
+    checkFillBtn.disabled = true;
+    setTimeout(nextFillQuestion, 700);
+  } else {
+    sad();
+    messageEl.textContent = (state.stage === 4)
+      ? '😅 Not quite — this level restarts with new letters. Try again!'
+      : `💪 Keep going! This trophy round restarts with new letters. Stars kept: ${state.stars}`;
+    checkFillBtn.disabled = true;
+    setTimeout(() => {
+      state.questionIndex = 0;
+      state.currentQuestion = makeFillQuestion();
+      renderFillQuestion();
+    }, 1200);
+  }
+}
+
+/* ============================================================
+   AUDIO
+   ============================================================ */
+let audioCtx;
+function playTone(freq, dur){
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = freq; g.gain.value = 0.08;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch(e){}
+}
+function cheer(){ playTone(880,0.12); setTimeout(()=>playTone(1100,0.12),120); setTimeout(()=>playTone(1320,0.18),240); }
+function sad(){ playTone(300,0.15); setTimeout(()=>playTone(220,0.2),150); }
+
+/* ============================================================
+   CERTIFICATE
+   ============================================================ */
+function showCertificate(){
+  cheer(); setTimeout(cheer, 400);
+  dragStage.classList.add('hidden');
+  fillStage.classList.add('hidden');
+  gamePage.classList.add('hidden');
+  certPage.classList.remove('hidden');
+
+  certName.textContent = state.player.name;
+  certClass.textContent = `Class: ${state.player.className}`;
+  certDate.textContent = 'Awarded on ' + formatOrdinalDate(new Date());
+}
+
+/* ============================================================
+   WIRE UP
+   ============================================================ */
+checkDragBtn.addEventListener('click', handleDragCheck);
+checkFillBtn.addEventListener('click', handleFillCheck);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !fillStage.classList.contains('hidden') && !checkFillBtn.disabled){
+    handleFillCheck();
+  }
+});
+</script>
+</body>
+</html>
